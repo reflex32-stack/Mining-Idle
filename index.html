@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mining Empire – Idle Mining</title>
+<style>
+:root{--bg:#10141b;--panel:#171d27;--panel2:#202938;--text:#f2f5f7;--muted:#9da8b7;--gold:#f4bd4f;--green:#5bd68a;--red:#ff6b6b;--blue:#62a8ff}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(#0d1117,#151b25);color:var(--text)}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:#2b3749;color:#fff;font-weight:700}button:hover{filter:brightness(1.15)}button:disabled{opacity:.45;cursor:not-allowed}
+.app{max-width:1400px;margin:auto;padding:18px}.top{position:sticky;top:0;z-index:10;background:rgba(13,17,23,.96);padding:10px 0;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.brand h1{margin:0;font-size:28px}.brand p{margin:4px 0;color:var(--muted)}
+.stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.stat{background:var(--panel);border:1px solid #2a3443;border-radius:12px;padding:10px 14px;min-width:150px}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:1.35fr .95fr;gap:16px;margin-top:16px}.panel{background:rgba(23,29,39,.96);border:1px solid #2a3443;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.mineview{height:360px;position:relative;overflow:hidden;background:linear-gradient(#273546 0 42%,#5a4635 42%);border-radius:12px;border:1px solid #39475a}
+.sun{position:absolute;right:28px;top:25px;width:58px;height:58px;border-radius:50%;background:#f4bd4f;opacity:.9}
+.mountain{position:absolute;bottom:58%;width:0;height:0;border-left:170px solid transparent;border-right:170px solid transparent;border-bottom:145px solid #303d4c}.m1{left:5%}.m2{left:34%;border-left-width:220px;border-right-width:220px;border-bottom-color:#39495a}.m3{right:-5%;border-left-width:200px;border-right-width:200px;border-bottom-color:#263442}
+.ground{position:absolute;bottom:0;left:0;right:0;height:58%;background:repeating-linear-gradient(0deg,#4a392d 0 38px,#574333 38px 41px)}
+.tunnel{position:absolute;left:8%;right:8%;bottom:15%;height:125px;border:18px solid #2c2a2a;border-bottom:0;border-radius:70px 70px 0 0;background:#1b1d21}
+.cart{position:absolute;bottom:18%;left:12%;font-size:34px;animation:drive 8s linear infinite}.worker{position:absolute;bottom:28%;font-size:32px;animation:walk 5s ease-in-out infinite alternate}.w1{left:35%}.w2{left:64%;animation-delay:1s}.gem{position:absolute;bottom:25%;left:51%;font-size:28px;animation:pulse 1.8s infinite}
+@keyframes drive{0%{left:12%}50%{left:76%}100%{left:12%}}@keyframes walk{from{transform:translateX(-18px)}to{transform:translateX(18px)}}@keyframes pulse{50%{transform:scale(1.25)}}
+.minebar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px}.income{font-size:24px;font-weight:800;color:var(--green)}.progress{height:9px;background:#2a3340;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--gold);width:0}
+.tabs{display:flex;gap:8px;margin-bottom:12px}.tab.active{background:var(--gold);color:#171717}
+.list{display:grid;gap:10px;max-height:660px;overflow:auto}.card{background:var(--panel2);border:1px solid #303c4d;border-radius:12px;padding:12px}.card.locked{opacity:.52}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.title{font-weight:800}.small{font-size:12px;color:var(--muted)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.price{color:var(--gold);font-weight:800}.badge{display:inline-block;padding:3px 7px;border-radius:99px;background:#2b3749;font-size:11px;color:#dce5ef}.green{color:var(--green)}.danger{color:var(--red)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.modal{max-width:560px;width:100%;background:#171d27;border:1px solid #384557;border-radius:18px;padding:22px}.modal h2{margin-top:0}.modal .big{font-size:30px;color:var(--gold);font-weight:900}.modal .buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.footer{margin-top:14px;color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:950px){.layout{grid-template-columns:1fr}.stats{justify-content:flex-start}.mineview{height:300px}}@media(max-width:600px){.top{grid-template-columns:1fr}.stat{min-width:130px}.mineview{height:250px}}
+</style>
+
+<style>
+html,body{overscroll-behavior-y:none}
+body{-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
+button,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{min-height:44px}
+@media(max-width:700px){
+  body{font-size:15px}
+  .top{padding:8px 8px}
+  .top .brand{font-size:20px}
+  .tabs{position:sticky;top:0;z-index:9;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .tabs button{min-width:105px}
+  .grid{grid-template-columns:1fr!important}
+  .panel{padding:12px!important}
+  .card{padding:12px!important}
+}
+</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mining Empire">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>⛏️ Mining Empire</h1><p>Idle Mining · Minen · Manager · Investoren</p></div>
+    <div class="stats">
+      <div class="stat"><span>Vermögen</span><b id="money">$0</b></div>
+      <div class="stat"><span>Profit / Sek.</span><b id="income">$0</b></div>
+      <div class="stat"><span>Investoren</span><b id="investors">0</b></div>
+      <div class="stat"><span>Globaler Bonus</span><b id="globalBonus">+0%</b></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main>
+      <section class="panel">
+        <div class="mineview">
+          <div class="sun"></div><div class="mountain m1"></div><div class="mountain m2"></div><div class="mountain m3"></div>
+          <div class="ground"></div><div class="tunnel"></div><div class="cart">🚂💎</div><div class="worker w1">👷</div><div class="worker w2">👷</div><div class="gem">💎</div>
+        </div>
+        <div class="minebar">
+          <div><div class="small">Gesamtproduktion</div><div class="income" id="bigIncome">$0 / s</div></div>
+          <button onclick="openPrestige()">🏦 Investor-Reset</button>
+        </div>
+      </section>
+      <section class="panel" style="margin-top:16px">
+        <div class="tabs">
+          <button class="tab active" onclick="showTab('mines',this)">⛏️ Minen</button>
+          <button class="tab" onclick="showTab('managers',this)">👷 Manager</button>
+          <button class="tab" onclick="showTab('invest',this)">🏦 Investoren</button>
+          <button class="tab" onclick="showTab('stats',this)">📊 Statistik</button>
+        </div>
+        <div id="content"></div>
+      </section>
+    </main>
+    <aside class="panel">
+      <h2 style="margin-top:0">🏆 Fortschritt</h2>
+      <div id="next"></div>
+      <hr style="border-color:#2a3443;margin:18px 0">
+      <h3>💾 Spielstand</h3>
+      <div class="actions">
+        <button onclick="saveGame()">Speichern</button>
+        <button onclick="resetSave()" class="danger">Spielstand löschen</button>
+      </div>
+      <p class="small">Der Spielstand wird automatisch im Browser gespeichert. Offline-Produktion wird beim nächsten Laden berechnet.</p>
+    </aside>
+  </div>
+  <div class="footer">Prototyp · Zahlen und Balancing können später feinjustiert werden.</div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+"use strict";
+
+const mines=[
+{name:"Kohlemine",icon:"🪨",cost:100,base:5,unlock:0},
+{name:"Kupfermine",icon:"🪙",cost:2500,base:45,unlock:2000},
+{name:"Silbermine",icon:"🥈",cost:50000,base:650,unlock:40000},
+{name:"Goldmine",icon:"🥇",cost:1e6,base:12000,unlock:750000},
+{name:"Diamantenmine",icon:"💎",cost:3e7,base:350000,unlock:2e7},
+{name:"Ölschacht",icon:"🛢️",cost:7.5e8,base:8e6,unlock:5e8},
+{name:"Uranmine",icon:"☢️",cost:2e10,base:2.2e8,unlock:1.5e10},
+{name:"Kristallmine",icon:"🔷",cost:6e11,base:6.5e9,unlock:4e11},
+{name:"Magmamine",icon:"🌋",cost:2e13,base:2.1e11,unlock:1.5e13},
+{name:"Meteoritenmine",icon:"🌌",cost:1e15,base:1.1e13,unlock:7.5e14},
+{name:"Mondmine",icon:"🪐",cost:5e16,base:5.5e14,unlock:4e16},
+{name:"Dimensionsmine",icon:"✨",cost:5e18,base:6e16,unlock:4e18}
+];
+
+const managerNames=["Max Bergmann","Anna Gold","Viktor Stahl","Leo Transport","Dr. Nova","Mr. Capital"];
+const managerIcons=["👷","💰","⚙️","🚚","🔬","👔"];
+const managerRoles=[
+"Produktion",
+"Ertrag",
+"Technik",
+"Transport",
+"Forschung",
+"Finanzen"
+];
+
+let currentTab="mines";
+let state={
+  money:1000,
+  investors:0,
+  spentInvestors:{industry:0,staff:0,finance:0,efficiency:0,research:0},
+  mines:mines.map((m,i)=>({level:i===0?1:0,manager:i===0?0:-1})),
+  managers:managerNames.map((n,i)=>({name:n,level:i===0?1:0,unlocked:i===0})),
+  totalEarned:0,
+  last:Date.now(),
+  achievements:[]
+};
+
+function fmt(n){
+  if(!Number.isFinite(n)) return "∞";
+  const units=["","K","M","B","T","Qa","Qi","Sx","Sp","Oc","No"];
+  let v=n,u=0;
+  while(Math.abs(v)>=1000 && u<units.length-1){v/=1000;u++}
+  if(u===0)return Math.round(v).toLocaleString("de-DE");
+  return v.toFixed(v>=100?0:v>=10?1:2)+" "+units[u];
+}
+function money(n){return "$"+fmt(n)}
+
+function globalBonus(){
+  return state.investors*.05 + state.spentInvestors.industry*.10;
+}
+function managerBonus(i){
+  if(!state.mines[i])return 0;
+  const mi=state.mines[i].manager;
+  if(mi<0 || !state.managers[mi]?.unlocked)return 0;
+  const l=state.managers[mi].level;
+  const base=[.10,.08,.06,.07,.05,.09][mi]||.05;
+  const exponent=[1.15,1.12,1.10,1.10,1.08,1.12][mi]||1.1;
+  return base*Math.pow(l,exponent)*(1+state.spentInvestors.staff*.08);
+}
+function mineMult(level){
+  return level>0 ? 1+.35*Math.pow(level-1,.85) : 0;
+}
+function mineIncome(i){
+  const m=state.mines[i];
+  if(!m || m.level<=0)return 0;
+  const manager=m.manager;
+  const transport=(manager===3 && state.managers[3]?.unlocked) ? 1+.05*state.managers[3].level : 1;
+  return mines[i].base*mineMult(m.level)*(1+managerBonus(i))*transport;
+}
+function income(){
+  return state.mines.reduce((sum,_,i)=>sum+mineIncome(i),0)*(1+globalBonus());
+}
+function mineLevelCost(i){
+  const l=state.mines[i].level;
+  const manager=state.mines[i].manager;
+  const techDiscount=(manager===2 && state.managers[2]?.unlocked)?state.managers[2].level*.02:0;
+  const discount=Math.min(.85,state.spentInvestors.efficiency*.03+techDiscount);
+  return mines[i].cost*Math.pow(1.15,Math.max(0,l-1))*(1-discount);
+}
+function managerCost(i){
+  return 5000*Math.pow(1.32,Math.max(0,state.managers[i].level-1));
+}
+function startCapital(){
+  return 1000*(1+state.spentInvestors.finance*.05);
+}
+function offlineMultiplier(){
+  let b=1+state.spentInvestors.research*.05;
+  if(state.managers[4]?.unlocked && state.mines.some(m=>m.manager===4)){
+    b+=.03*state.managers[4].level;
+  }
+  return b;
+}
+function investorYieldMultiplier(){
+  if(!state.managers[5]?.unlocked || !state.mines.some(m=>m.manager===5))return 1;
+  return 1+.05*state.managers[5].level;
+}
+function investorGain(){
+  return Math.floor(Math.pow(Math.max(state.totalEarned,1e12)/1e12,.65)*investorYieldMultiplier());
+}
+
+function saveGame(){
+  state.last=Date.now();
+  localStorage.setItem("miningEmpireSave",JSON.stringify(state));
+}
+function loadGame(){
+  const raw=localStorage.getItem("miningEmpireSave");
+  if(raw){
+    try{
+      const loaded=JSON.parse(raw);
+      state={...state,...loaded};
+      state.spentInvestors={...{industry:0,staff:0,finance:0,efficiency:0,research:0},...(loaded.spentInvestors||{})};
+      state.mines=mines.map((_,i)=>({
+        level:Number.isFinite(loaded.mines?.[i]?.level)?loaded.mines[i].level:(i===0?1:0),
+        manager:Number.isFinite(loaded.mines?.[i]?.manager)?loaded.mines[i].manager:(i===0?0:-1)
+      }));
+      state.managers=managerNames.map((name,i)=>({
+        name,
+        level:Number.isFinite(loaded.managers?.[i]?.level)?loaded.managers[i].level:(i===0?1:0),
+        unlocked:!!loaded.managers?.[i]?.unlocked || i===0
+      }));
+    }catch(e){
+      console.warn("Spielstand konnte nicht geladen werden",e);
+    }
+  }
+  state.last=Number.isFinite(state.last)?state.last:Date.now();
+  const offline=Math.min(8*3600,Math.max(0,(Date.now()-state.last)/1000));
+  if(offline>10 && raw){
+    const gain=income()*offline*offlineMultiplier();
+    state.money+=gain;
+    state.totalEarned+=gain;
+    setTimeout(()=>alert("Offline-Einnahmen: "+fmt(gain)+"\nZeit: "+Math.floor(offline/3600)+"h "+Math.floor((offline%3600)/60)+"m"),50);
+  }
+  state.last=Date.now();
+}
+
+function showTab(tab,btn){
+  currentTab=tab;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  renderContent();
+}
+function renderContent(){
+  if(currentTab==="mines")renderMines();
+  else if(currentTab==="managers")renderManagers();
+  else if(currentTab==="invest")renderInvest();
+  else renderStats();
+}
+function buyMine(i){
+  const s=state.mines[i];
+  const cost=s.level===0?mines[i].cost:mineLevelCost(i);
+  if(state.money<cost)return;
+  if(s.level===0 && state.totalEarned<mines[i].unlock)return;
+  state.money-=cost;
+  s.level++;
+  if(i<managerNames.length)state.managers[i].unlocked=true;
+  saveGame();
+  renderContent();
+  updateLiveUI();
+}
+function buyManager(i){
+  const m=state.managers[i],cost=managerCost(i);
+  if(!m.unlocked || state.money<cost)return;
+  state.money-=cost;
+  m.level++;
+  saveGame();
+  renderContent();
+  updateLiveUI();
+}
+function assignManager(mi,value){
+  const mineIndex=Number(value);
+  if(!state.managers[mi]?.unlocked)return;
+  state.mines.forEach(m=>{if(m.manager===mi)m.manager=-1});
+  if(mineIndex>=0 && state.mines[mineIndex]?.level>0)state.mines[mineIndex].manager=mi;
+  saveGame();
+  renderContent();
+  updateLiveUI();
+}
+function invest(category){
+  const used=Object.values(state.spentInvestors).reduce((a,b)=>a+b,0);
+  if(used>=state.investors)return;
+  state.spentInvestors[category]++;
+  saveGame();
+  renderContent();
+  updateLiveUI();
+}
+function resetSave(){
+  if(!confirm("Spielstand wirklich löschen?"))return;
+  localStorage.removeItem("miningEmpireSave");
+  location.reload();
+}
+function openPrestige(){
+  if(state.totalEarned<1e12){
+    alert("Der Investor-Reset wird ab 1 Billion Gesamtverdienst freigeschaltet.");
+    return;
+  }
+  const gain=investorGain();
+  modal.style.display="flex";
+  modalContent.innerHTML=`<h2>🏦 Investor-Reset</h2>
+  <p>Dieser Run hat <b>${money(state.totalEarned)}</b> erwirtschaftet.</p>
+  <div class="big">${gain} Investoren</div>
+  <p class="small">Minen- und Manager-Level werden zurückgesetzt. Investoren und deren Spezialisierungen bleiben erhalten.</p>
+  <div class="buttons"><button onclick="closeModal()">Weiter spielen</button><button onclick="prestige()">♻️ Reset durchführen</button></div>`;
+}
+function closeModal(){modal.style.display="none"}
+function prestige(){
+  const gain=investorGain();
+  state.investors+=gain;
+  state.money=startCapital();
+  state.totalEarned=0;
+  state.mines=mines.map((_,i)=>({level:i===0?1:0,manager:i===0?0:-1}));
+  state.managers=managerNames.map((name,i)=>({name,level:i===0?1:0,unlocked:i===0}));
+  closeModal();
+  saveGame();
+  renderContent();
+  updateLiveUI();
+}
+function renderMines(){
+  content.innerHTML=`<div class="list">${mines.map((m,i)=>{
+    const s=state.mines[i], locked=state.totalEarned<m.unlock&&s.level===0;
+    const cost=s.level===0?m.cost:mineLevelCost(i);
+    const man=s.manager>=0?managerNames[s.manager]:"Keiner";
+    return `<div class="card ${locked?"locked":""}">
+      <div class="row"><div><span class="title">${m.icon} ${m.name}</span> <span class="badge">${s.level?"Level "+s.level:"Gesperrt"}</span></div><div class="price">${money(cost)}</div></div>
+      <div class="small">${locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost)}</div>
+      <div class="progress" style="margin-top:8px"><i style="width:${s.level?Math.min(100,Math.log10(s.level+1)/3*100):0}%"></i></div>
+      <div class="actions"><button ${locked||state.money<cost?"disabled":""} onclick="buyMine(${i})">${s.level?"⬆️ Leveln":"🔓 Freischalten"}</button>${s.level?`<span class="badge">Managerbonus +${(managerBonus(i)*100).toFixed(0)}%</span>`:""}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+function renderManagers(){
+  content.innerHTML=`<div class="list">${state.managers.map((m,i)=>{
+    const cost=managerCost(i),mine=state.mines.findIndex(x=>x.manager===i);
+    return `<div class="card ${m.unlocked?"":"locked"}"><div class="row"><div><span class="title">${managerIcons[i]} ${m.name}</span><div class="small">${m.unlocked?"Level "+m.level+" · Rolle: "+managerRoles[i]:"Wird mit der entsprechenden Mine freigeschaltet"}</div></div><div class="price">${m.unlocked?money(cost):"🔒"}</div></div>
+    ${m.unlocked?`<div class="actions"><button ${state.money<cost?"disabled":""} onclick="buyManager(${i})">💰 Aufwerten</button><select onchange="assignManager(${i},this.value)" style="padding:9px;border-radius:9px;background:#2b3749;color:white;border:0"><option value="-1">Keine Mine</option>${state.mines.map((x,j)=>x.level?`<option value="${j}" ${mine===j?"selected":""}>${mines[j].name}</option>`:"").join("")}</select></div>`:""}</div>`;
+  }).join("")}</div>`;
+}
+function renderInvest(){
+  const cats=[["industry","🏭 Industrie","+10% Produktion / Punkt"],["staff","👷 Personal","+8% Managerwirkung / Punkt"],["finance","💰 Finanzen","+5% Startkapital / Punkt"],["efficiency","⚙️ Effizienz","-3% Ausbaukosten / Punkt"],["research","🔬 Forschung","+5% Offline-Einnahmen / Punkt"]];
+  const used=Object.values(state.spentInvestors).reduce((a,b)=>a+b,0);
+  content.innerHTML=`<div class="card"><div class="title">🏦 Investoren</div><p class="small">Verfügbar: ${state.investors-used} · globale Produktion: +${(globalBonus()*100).toFixed(0)}% · Startkapital: ${money(startCapital())} · Offline-Bonus: +${((offlineMultiplier()-1)*100).toFixed(0)}%</p><div class="big" style="font-size:28px">${state.investors}</div></div><div class="list" style="margin-top:10px">${cats.map(([k,n,d])=>`<div class="card"><div class="row"><div><div class="title">${n}</div><div class="small">${d}</div></div><b>${state.spentInvestors[k]}</b></div><div class="actions"><button ${used>=state.investors?"disabled":""} onclick="invest('${k}')">Investor investieren</button></div></div>`).join("")}</div>`;
+}
+function renderStats(){
+  content.innerHTML=`<div class="list"><div class="card"><div class="title">📊 Statistik</div><p>Run-Einnahmen: <b>${money(state.totalEarned)}</b></p><p>Aktuelle Produktion: <b>${money(income())}/s</b></p><p>Investoren: <b>${state.investors}</b></p><p>Potenzielle Investoren: <b>${investorGain()}</b></p></div><div class="card"><div class="title">🏆 Meilensteine</div><p>${state.totalEarned>=1e12?"✅":"⬜"} Erste Billion</p><p>${state.investors>=1?"✅":"⬜"} Erster Investor</p><p>${state.managers.some(m=>m.level>=100)?"✅":"⬜"} Manager Level 100</p></div></div>`;
+}
+
+const moneyEl=document.getElementById("money");
+const incomeEl=document.getElementById("income");
+const bigIncome=document.getElementById("bigIncome");
+const investorsEl=document.getElementById("investors");
+const globalBonusEl=document.getElementById("globalBonus");
+const content=document.getElementById("content");
+const next=document.getElementById("next");
+const modal=document.getElementById("modal");
+const modalContent=document.getElementById("modalContent");
+
+function updateLiveUI(){
+  moneyEl.textContent=money(state.money);
+  incomeEl.textContent=money(income());
+  bigIncome.textContent=money(income())+" / s";
+  investorsEl.textContent=state.investors;
+  globalBonusEl.textContent="+"+(globalBonus()*100).toFixed(0)+"%";
+  next.innerHTML=`<p>🏦 Investor-Reset: <b>${state.totalEarned>=1e12?"freigeschaltet":"ab "+money(1e12)}</b></p><p>Aktueller Run: <b>${money(state.totalEarned)}</b></p><div class="progress"><i style="width:${Math.min(100,state.totalEarned/1e12*100)}%"></i></div><p class="small">${state.totalEarned>=1e12?"Reset bringt "+investorGain()+" Investoren.":"Noch "+money(Math.max(0,1e12-state.totalEarned))+" bis zur ersten Reset-Möglichkeit."}</p>`;
+}
+function render(){
+  updateLiveUI();
+  renderContent();
+}
+loadGame();
+render();
+
+setInterval(()=>{
+  const now=Date.now();
+  const dt=Math.min(5,Math.max(0,(now-state.last)/1000));
+  const gain=income()*dt;
+  state.money+=gain;
+  state.totalEarned+=gain;
+  state.last=now;
+  updateLiveUI();
+},1000);
+setInterval(saveGame,10000);
+
+window.addEventListener("error",e=>console.error("Mining Empire Fehler:",e.error||e.message));
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err =>
+      console.warn("Service Worker konnte nicht registriert werden:", err)
+    );
+  });
+}
+</script>
+
+</body>
+</html>
