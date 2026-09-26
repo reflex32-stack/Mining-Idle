@@ -104,6 +104,27 @@ background:rgba(13,17,23,.97)!important;backdrop-filter:blur(10px);
   position: relative;
 }
 </style>
+
+<style id="v14-ui">
+:root{--ui-max:1180px;--ui-gap:clamp(8px,1.5vw,18px)}
+html,body{width:100%;min-width:0;overflow-x:hidden}
+body{margin:0;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+.top{position:sticky!important;top:0!important;z-index:2000!important;width:100%!important;background:rgba(13,17,23,.97)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.22)}
+.wrap,.container,main{width:min(100%,var(--ui-max))!important;margin-left:auto!important;margin-right:auto!important}
+.grid{gap:var(--ui-gap)!important}
+.card,.panel{min-width:0!important;max-width:100%!important}
+button,select,input{max-width:100%;font:inherit}
+button{min-height:42px;touch-action:manipulation}
+img,canvas,svg{max-width:100%;height:auto}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:650px){body{font-size:15px}.top{padding:8px 10px!important}.grid{grid-template-columns:1fr!important}.panel,.card{padding:12px!important}.tabs{display:flex!important;overflow-x:auto!important;white-space:nowrap!important;-webkit-overflow-scrolling:touch}.tabs>*{flex:0 0 auto}}
+@media(max-width:420px){body{font-size:14px}.top{padding-left:7px!important;padding-right:7px!important}button{min-height:40px}}
+.mine-manager{margin-top:9px;padding:9px;border-radius:10px;background:rgba(255,255,255,.045)}
+.manager-info{line-height:1.45}.manager-controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.top .stats{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+@media(max-width:520px){.top .stats{gap:5px 9px;font-size:.92em}}
+.list,.mine-list,.mines-list,#mineList,#mines,.mine-panel,.mines-panel{max-height:none!important;height:auto!important;overflow:visible!important;overflow-y:visible!important}
+</style>
 </head>
 <body>
 <div class="app">
@@ -196,6 +217,7 @@ let state={
   managers:managerNames.map((n,i)=>({name:n,level:i===0?1:0,unlocked:i===0})),
   totalEarned:0,
   last:Date.now(),
+  productionTimers:mines.map(()=>0),
   achievements:[]
 };
 
@@ -222,6 +244,10 @@ function managerBonus(i){
 }
 function mineMult(level){
   return level>0 ? 1+.35*Math.pow(level-1,.85) : 0;
+}
+function productionTime(level){
+  if(level<=0) return 0;
+  return Math.max(1,15-5*Math.floor(level/5));
 }
 
 function levelCostFor(i, level){
@@ -271,8 +297,12 @@ function mineIncome(i){
   const transport=(manager===3 && state.managers[3]?.unlocked) ? 1+.05*state.managers[3].level : 1;
   return mines[i].base*mineMult(m.level)*(1+managerBonus(i))*transport;
 }
+function mineEffectiveIncome(i){
+  const t=productionTime(state.mines[i]?.level||0);
+  return t>0 ? mineIncome(i)/t : 0;
+}
 function income(){
-  return state.mines.reduce((sum,_,i)=>sum+mineIncome(i),0)*(1+globalBonus());
+  return state.mines.reduce((sum,_,i)=>sum+mineEffectiveIncome(i),0)*(1+globalBonus());
 }
 function mineLevelCost(i){
   const l=state.mines[i].level;
@@ -305,24 +335,31 @@ function investorGain(){
 
 /* V9: one automatic manager per mine, unlocked at mine level 10 */
 function ensureMineManagers(){
+  const fixedManagerNames=["Karl Kohler", "Klara Kupfer", "Silas Silber", "Gustav Gold", "Diana Diamant", "Oskar Öl", "Uwe Uran", "Kristian Kristall", "Mara Magma", "Milo Meteor", "Luna Mond", "Viktor Dimension"];
   if(!state || !Array.isArray(state.mines)) return;
   if(!Array.isArray(state.mineManagers)) state.mineManagers=[];
   while(state.mineManagers.length < state.mines.length){
     const i=state.mineManagers.length;
     state.mineManagers.push({
-      name:(mines[i]&&mines[i].name ? "Manager " + mines[i].name : "Manager "+(i+1)),
+      name:fixedManagerNames[i] || ("Manager " + (i+1)),
       level:1,
       mine:i
     });
   }
   if(state.mineManagers.length>state.mines.length) state.mineManagers.length=state.mines.length;
+  for(let i=0;i<state.mineManagers.length;i++){
+    state.mineManagers[i].name=fixedManagerNames[i] || ("Manager " + (i+1));
+  }
 }
 function mineManagerUnlocked(i){
   return !!(state.mines[i] && state.mines[i].level>=10);
 }
 function mineManagerCost(i){
+  ensureMineManagers();
   const m=state.mineManagers[i]||{level:1};
-  return 5000*Math.pow(1.32,Math.max(0,m.level-1));
+  const mine=mines[i]||{cost:5000};
+  const base=Math.max(5000,mine.cost*0.05);
+  return base*Math.pow(1.32,Math.max(0,m.level-1));
 }
 function mineManagerBonus(i){
   return managerBonus(i);
@@ -429,6 +466,7 @@ function loadGame(){
         level:Number.isFinite(loaded.mines?.[i]?.level)?loaded.mines[i].level:(i===0?1:0),
         manager:Number.isFinite(loaded.mines?.[i]?.manager)?loaded.mines[i].manager:(i===0?0:-1)
       }));
+      state.productionTimers=mines.map((_,i)=>Number.isFinite(loaded.productionTimers?.[i])?Math.max(0,loaded.productionTimers[i]):0);
       state.managers=managerNames.map((name,i)=>({
         name,
         level:Number.isFinite(loaded.managers?.[i]?.level)?loaded.managers[i].level:(i===0?1:0),
@@ -438,13 +476,16 @@ function loadGame(){
       console.warn("Spielstand konnte nicht geladen werden",e);
     }
   }
+  if(!Array.isArray(state.productionTimers)) state.productionTimers=mines.map(()=>0);
+  while(state.productionTimers.length<mines.length) state.productionTimers.push(0);
+  state.productionTimers.length=mines.length;
   state.last=Number.isFinite(state.last)?state.last:Date.now();
-  const offline=Math.min(8*3600,Math.max(0,(Date.now()-state.last)/1000));
+  const offline=Math.min(10*60,Math.max(0,(Date.now()-state.last)/1000));
   if(offline>10 && raw){
     const gain=income()*offline*offlineMultiplier();
     state.money+=gain;
     state.totalEarned+=gain;
-    setTimeout(()=>alert("Offline-Einnahmen: "+fmt(gain)+"\nZeit: "+Math.floor(offline/3600)+"h "+Math.floor((offline%3600)/60)+"m"),50);
+    setTimeout(()=>alert("Offline-Einnahmen: "+fmt(gain)+"\nBerücksichtigte Zeit: "+Math.floor(offline/60)+" Min."),50);
   }
   state.last=Date.now();
 }
@@ -528,6 +569,7 @@ function prestige(){
   state.money=startCapital();
   state.totalEarned=0;
   state.mines=mines.map((_,i)=>({level:i===0?1:0,manager:i===0?0:-1}));
+  state.productionTimers=mines.map(()=>0);
   state.managers=managerNames.map((name,i)=>({name,level:i===0?1:0,unlocked:i===0}));
   closeModal();
   saveGame();
@@ -554,8 +596,8 @@ function updateMineControls(){
     if(level) level.textContent=s.level?"Level "+s.level:"Gesperrt";
     if(price) price.textContent=money(cost);
     if(info){
-      const man=s.manager>=0?managerNames[s.manager]:"Keiner";
-      info.textContent=locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost);
+      const man=(s.level>=10 && state.mineManagers?.[i])?state.mineManagers[i].name:"Noch kein Manager";
+      info.textContent=locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+" alle "+productionTime(s.level)+"s · effektiv "+money(mineEffectiveIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost);
     }
     if(prog) prog.style.width=(s.level?Math.min(100,Math.log10(s.level+1)/3*100):0)+"%";
     if(one){
@@ -590,10 +632,10 @@ function renderMines(){
   content.innerHTML=`<div class="list">${mines.map((m,i)=>{
     const s=state.mines[i], locked=state.totalEarned<m.unlock&&s.level===0;
     const cost=s.level===0?m.cost:mineLevelCost(i);
-    const man=s.manager>=0?managerNames[s.manager]:"Keiner";
+    const man=(s.level>=10 && state.mineManagers?.[i])?state.mineManagers[i].name:"Noch kein Manager";
     return `<div class="card mine-card ${locked?"locked":""}" data-mine-card="${i}">
       <div class="row"><div><span class="title">${m.icon} ${m.name}</span> <span class="badge mine-level">${s.level?"Level "+s.level:"Gesperrt"}</span></div><div class="price mine-cost">${money(cost)}</div></div>
-      <div class="small mine-info">${locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost)}</div>
+      <div class="small mine-info">${locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+" alle "+productionTime(s.level)+"s · effektiv "+money(mineEffectiveIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost)}</div>
       <div class="progress" style="margin-top:8px"><i class="mine-progress" style="width:${s.level?Math.min(100,Math.log10(s.level+1)/3*100):0}%"></i></div>
       <div class="actions"><button class="mine-level-one" ${locked||state.money<cost?"disabled":""} onclick="buyMine(${i});return false;">${s.level?"⬆️ Leveln":"🔓 Freischalten"}</button>
       <div class="level-controls" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -666,7 +708,19 @@ render();
 setInterval(()=>{
   const now=Date.now();
   const dt=Math.min(5,Math.max(0,(now-state.last)/1000));
-  const gain=income()*dt;
+  let gain=0;
+  if(!Array.isArray(state.productionTimers)) state.productionTimers=mines.map(()=>0);
+  for(let i=0;i<mines.length;i++){
+    const level=state.mines[i]?.level||0;
+    if(level<=0) continue;
+    const cycleTime=productionTime(level);
+    state.productionTimers[i]=(state.productionTimers[i]||0)+dt;
+    const cycles=Math.floor(state.productionTimers[i]/cycleTime);
+    if(cycles>0){
+      gain += cycles*mineIncome(i)*(1+globalBonus());
+      state.productionTimers[i]-=cycles*cycleTime;
+    }
+  }
   state.money+=gain;
   state.totalEarned+=gain;
   state.last=now;

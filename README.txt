@@ -1,26 +1,13 @@
-# Mining Empire V6 – PWA
+Idle Miner V16 – Produktionszeiten
 
-## Online stellen
-Die Dateien müssen über HTTPS ausgeliefert werden. Einfachste Möglichkeiten:
-- GitHub Pages
-- Netlify
-- Vercel
+Basis: V14.
 
-Wichtig: `index.html`, `manifest.json`, `sw.js` und die beiden PNG-Dateien müssen im selben Ordner liegen.
+Neue Produktionszeiten:
+- Level 1–4: 15 Sekunden
+- Level 5–9: 10 Sekunden
+- Level 10–14: 5 Sekunden
+- Level 15+: 1 Sekunde
 
-## Smartphone installieren
+Der angezeigte Profit/Sek. berücksichtigt die Produktionszeit. Die Mine zahlt ihren Produktionsbetrag jeweils am Ende eines Produktionszyklus aus.
 
-### Android / Chrome
-1. Öffne die HTTPS-Adresse des Spiels.
-2. Im Browser-Menü „App installieren“ / „Zum Startbildschirm hinzufügen“ wählen.
-3. Die App erscheint auf dem Homescreen.
-
-### iPhone / Safari
-1. Öffne die HTTPS-Adresse in Safari.
-2. Teilen → „Zum Home-Bildschirm“.
-3. „Hinzufügen“.
-
-Der Service Worker ermöglicht anschließend die Nutzung auch ohne Internet, sobald die App einmal geladen wurde.
-
-## Hinweis
-Ein lokales `file://`-Öffnen reicht für eine installierbare PWA nicht aus. Für Installation und Offline-Cache braucht das Spiel eine HTTPS-Webadresse (localhost ist für Entwicklung ebenfalls erlaubt).
+V16 aktualisiert außerdem den Service-Worker-Cache, damit GitHub Pages nicht versehentlich die alte V14-Version ausliefert.
