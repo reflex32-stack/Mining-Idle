@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Mining Empire – Idle Mining</title>
+<title>Idle Miner – Idle Mining</title>
 <style>
 :root{--bg:#10141b;--panel:#171d27;--panel2:#202938;--text:#f2f5f7;--muted:#9da8b7;--gold:#f4bd4f;--green:#5bd68a;--red:#ff6b6b;--blue:#62a8ff}
 *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(#0d1117,#151b25);color:var(--text)}
@@ -20,7 +20,7 @@ button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px
 @keyframes drive{0%{left:12%}50%{left:76%}100%{left:12%}}@keyframes walk{from{transform:translateX(-18px)}to{transform:translateX(18px)}}@keyframes pulse{50%{transform:scale(1.25)}}
 .minebar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px}.income{font-size:24px;font-weight:800;color:var(--green)}.progress{height:9px;background:#2a3340;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--gold);width:0}
 .tabs{display:flex;gap:8px;margin-bottom:12px}.tab.active{background:var(--gold);color:#171717}
-.list{display:grid;gap:10px;max-height:660px;overflow:auto}.card{background:var(--panel2);border:1px solid #303c4d;border-radius:12px;padding:12px}.card.locked{opacity:.52}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.title{font-weight:800}.small{font-size:12px;color:var(--muted)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.price{color:var(--gold);font-weight:800}.badge{display:inline-block;padding:3px 7px;border-radius:99px;background:#2b3749;font-size:11px;color:#dce5ef}.green{color:var(--green)}.danger{color:var(--red)}
+.list{display:grid;gap:10px;border:1px solid #303c4d;border-radius:12px;padding:12px}.card.locked{opacity:.52}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.title{font-weight:800}.small{font-size:12px;color:var(--muted)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.price{color:var(--gold);font-weight:800}.badge{display:inline-block;padding:3px 7px;border-radius:99px;background:#2b3749;font-size:11px;color:#dce5ef}.green{color:var(--green)}.danger{color:var(--red)}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.modal{max-width:560px;width:100%;background:#171d27;border:1px solid #384557;border-radius:18px;padding:22px}.modal h2{margin-top:0}.modal .big{font-size:30px;color:var(--gold);font-weight:900}.modal .buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
 .footer{margin-top:14px;color:var(--muted);font-size:12px;text-align:center}
 @media(max-width:950px){.layout{grid-template-columns:1fr}.stats{justify-content:flex-start}.mineview{height:300px}}@media(max-width:600px){.top{grid-template-columns:1fr}.stat{min-width:130px}.mineview{height:250px}}
@@ -48,7 +48,7 @@ button{min-height:44px}
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mining Empire">
+<meta name="apple-mobile-web-app-title" content="Idle Miner">
 
 <style id="v7-responsive">
 *{box-sizing:border-box}
@@ -72,11 +72,43 @@ button{min-height:44px;touch-action:manipulation}
 background:rgba(13,17,23,.97)!important;backdrop-filter:blur(10px);
 -webkit-backdrop-filter:blur(10px);padding-top:max(8px,env(safe-area-inset-top))!important}
 </style>
+
+<style id="v9-manager-style">
+.mine-manager{margin-top:8px;padding:8px;border-radius:10px;background:rgba(255,255,255,.04);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mine-manager button{min-height:38px}
+.muted{opacity:.7}
+</style>
+
+<style id="v11-manager-controls">
+.mine-manager{margin-top:8px;padding:8px;border-radius:10px;background:rgba(255,255,255,.04)}
+.manager-info{line-height:1.5}
+.manager-controls button{min-height:38px}
+</style>
+
+<style id="v13-natural-mine-scroll">
+/* V13: Minen nutzen ausschließlich den normalen Seiten-Scroll */
+.list,
+.mine-list,
+.mines-list,
+#mineList,
+#mines,
+.mine-panel,
+.mines-panel {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+}
+.mine-card {
+  position: relative;
+}
+</style>
 </head>
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>⛏️ Mining Empire</h1><p>Idle Mining · Minen · Manager · Investoren</p></div>
+    <div class="brand"><h1>⛏️ Idle Miner</h1><p>Idle Mining · Minen · Manager · Investoren</p></div>
     <div class="stats">
       <div class="stat"><span>Vermögen</span><b id="money">$0</b></div>
       <div class="stat"><span>Profit / Sek.</span><b id="income">$0</b></div>
@@ -100,7 +132,7 @@ background:rgba(13,17,23,.97)!important;backdrop-filter:blur(10px);
       <section class="panel" style="margin-top:16px">
         <div class="tabs">
           <button class="tab active" onclick="showTab('mines',this)">⛏️ Minen</button>
-          <button class="tab" onclick="showTab('managers',this)">👷 Manager</button>
+          
           <button class="tab" onclick="showTab('invest',this)">🏦 Investoren</button>
           <button class="tab" onclick="showTab('stats',this)">📊 Statistik</button>
         </div>
@@ -181,17 +213,57 @@ function globalBonus(){
   return state.investors*.05 + state.spentInvestors.industry*.10;
 }
 function managerBonus(i){
-  if(!state.mines[i])return 0;
-  const mi=state.mines[i].manager;
-  if(mi<0 || !state.managers[mi]?.unlocked)return 0;
-  const l=state.managers[mi].level;
-  const base=[.10,.08,.06,.07,.05,.09][mi]||.05;
-  const exponent=[1.15,1.12,1.10,1.10,1.08,1.12][mi]||1.1;
-  return base*Math.pow(l,exponent)*(1+state.spentInvestors.staff*.08);
+  ensureMineManagers();
+  if(!state.mines[i] || state.mines[i].level<10) return 0;
+  const mm=state.mineManagers[i];
+  if(!mm) return 0;
+  const staffBonus=1+(state.spentInvestors?.staff||0)*0.08;
+  return 0.10*Math.pow(Math.max(1,mm.level),1.08)*staffBonus;
 }
 function mineMult(level){
   return level>0 ? 1+.35*Math.pow(level-1,.85) : 0;
 }
+
+function levelCostFor(i, level){
+  let base=mines[i].cost*Math.pow(1.15,Math.max(0,level-1));
+  let manager=state.mines[i].manager, discount=0;
+  if(manager===2 && state.managers[manager].unlocked) discount=0.02*state.managers[manager].level;
+  return base*Math.max(.15,1-state.spentInvestors.efficiency*.03-discount);
+}
+function affordableLevels(i){
+  let l=state.mines[i].level, money=state.money, n=0;
+  if(l<=0)return 0;
+  while(n<100000){
+    let c=levelCostFor(i,l+n);
+    if(money+1e-9<c)break;
+    money-=c; n++;
+  }
+  return n;
+}
+function levelMineBy(i,count){
+  const y=window.scrollY;
+  const active=document.activeElement;
+  let n=Math.min(count,affordableLevels(i));
+  for(let k=0;k<n;k++){
+    let l=state.mines[i].level, c=levelCostFor(i,l);
+    if(state.money+1e-9<c)break;
+    state.money-=c;
+    state.mines[i].level++;
+  }
+  if(n>0){
+    ensureMineManagers(); autoAssignMineManagers();
+    saveGame();
+    renderContent();
+    window.scrollTo(0,y);
+    requestAnimationFrame(()=>{
+      window.scrollTo({top:y,left:0,behavior:"auto"});
+      updateMineControls();
+    });
+    updateLiveUI();
+  }
+}
+function maxLevelMine(i){levelMineBy(i,affordableLevels(i));}
+
 function mineIncome(i){
   const m=state.mines[i];
   if(!m || m.level<=0)return 0;
@@ -228,6 +300,118 @@ function investorYieldMultiplier(){
 }
 function investorGain(){
   return Math.floor(Math.pow(Math.max(state.totalEarned,1e12)/1e12,.65)*investorYieldMultiplier());
+}
+
+
+/* V9: one automatic manager per mine, unlocked at mine level 10 */
+function ensureMineManagers(){
+  if(!state || !Array.isArray(state.mines)) return;
+  if(!Array.isArray(state.mineManagers)) state.mineManagers=[];
+  while(state.mineManagers.length < state.mines.length){
+    const i=state.mineManagers.length;
+    state.mineManagers.push({
+      name:(mines[i]&&mines[i].name ? "Manager " + mines[i].name : "Manager "+(i+1)),
+      level:1,
+      mine:i
+    });
+  }
+  if(state.mineManagers.length>state.mines.length) state.mineManagers.length=state.mines.length;
+}
+function mineManagerUnlocked(i){
+  return !!(state.mines[i] && state.mines[i].level>=10);
+}
+function mineManagerCost(i){
+  const m=state.mineManagers[i]||{level:1};
+  return 5000*Math.pow(1.32,Math.max(0,m.level-1));
+}
+function mineManagerBonus(i){
+  return managerBonus(i);
+}
+
+function affordableManagerLevels(i){
+  ensureMineManagers();
+  if(!mineManagerUnlocked(i)) return 0;
+  let money=state.money, level=state.mineManagers[i].level, n=0;
+  while(n<100000){
+    const cost=5000*Math.pow(1.32,Math.max(0,level-1));
+    if(money+1e-9<cost) break;
+    money-=cost; level++; n++;
+  }
+  return n;
+}
+function levelMineManagerBy(i,count){
+  ensureMineManagers();
+  if(!mineManagerUnlocked(i)) return 0;
+  const y=window.scrollY;
+  let n=0;
+  while(n<count){
+    const cost=mineManagerCost(i);
+    if(state.money+1e-9<cost) break;
+    state.money-=cost;
+    state.mineManagers[i].level++;
+    n++;
+  }
+  if(n>0){
+    save();
+    render();
+    window.scrollTo({top:y,left:0,behavior:"auto"});
+    requestAnimationFrame(()=>{
+      window.scrollTo({top:y,left:0,behavior:"auto"});
+      updateMineControls();
+    });
+    updateLiveUI();
+  }
+  return n;
+}
+function maxLevelMineManager(i){
+  return levelMineManagerBy(i,affordableManagerLevels(i));
+}
+
+function upgradeMineManager(i){
+  ensureMineManagers();
+  if(!mineManagerUnlocked(i)) return false;
+  const cost=mineManagerCost(i);
+  if(state.money<cost) return false;
+  const y=window.scrollY;
+  state.money-=cost;
+  state.mineManagers[i].level++;
+  save();
+  render();
+  window.scrollTo({top:y,left:0,behavior:"auto"});
+  requestAnimationFrame(()=>{
+    window.scrollTo({top:y,left:0,behavior:"auto"});
+    updateMineControls();
+  });
+  updateLiveUI();
+  return true;
+}
+function autoAssignMineManagers(){
+  ensureMineManagers();
+  for(let i=0;i<state.mines.length;i++){
+    if(state.mines[i].level>=10 && state.mineManagers[i]) state.mineManagers[i].mine=i;
+  }
+}
+function mineManagerHTML(i){
+  ensureMineManagers();
+  const mine=state.mines[i], mm=state.mineManagers[i];
+  if(!mine || !mm) return "";
+  if(mine.level<10){
+    return `<div class="small muted mine-manager">Manager: automatisch ab Level 10</div>`;
+  }
+  const cost=mineManagerCost(i);
+  const affordable=affordableManagerLevels(i);
+  const bonus=mineManagerBonus(i)*100;
+  return `<div class="mine-manager" data-mine-manager="${i}">
+    <div class="manager-info">
+      <b>👔 ${mm.name}</b> · <span class="manager-level">Lv. ${mm.level}</span> ·
+      <span class="manager-bonus">+${bonus.toFixed(1)}% Produktion</span>
+    </div>
+    <div class="manager-controls" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <button class="manager-one" onclick="upgradeMineManager(${i});return false;" ${state.money<cost?'disabled':''}>+1 · ${fmt(cost)}</button>
+      <button class="manager-five" onclick="levelMineManagerBy(${i},5);return false;" ${affordable<1?'disabled':''}>+5 Lv.</button>
+      <button class="manager-max" onclick="maxLevelMineManager(${i});return false;" ${affordable<1?'disabled':''}>MAX</button>
+    </div>
+  </div>`;
 }
 
 function saveGame(){
@@ -282,11 +466,15 @@ function buyMine(i){
   const cost=s.level===0?mines[i].cost:mineLevelCost(i);
   if(state.money<cost)return;
   if(s.level===0 && state.totalEarned<mines[i].unlock)return;
+  const y=window.scrollY;
   state.money-=cost;
   s.level++;
   if(i<managerNames.length)state.managers[i].unlocked=true;
+  ensureMineManagers(); autoAssignMineManagers();
   saveGame();
   renderContent();
+  window.scrollTo(0,y);
+  requestAnimationFrame(()=>window.scrollTo(0,y));
   updateLiveUI();
 }
 function buyManager(i){
@@ -346,24 +534,81 @@ function prestige(){
   renderContent();
   updateLiveUI();
 }
+
+function updateMineControls(){
+  if(currentTab!=="mines") return;
+  document.querySelectorAll(".mine-card").forEach(card=>{
+    const i=Number(card.dataset.mineCard);
+    const s=state.mines[i], m=mines[i];
+    if(!s||!m) return;
+    const locked=state.totalEarned<m.unlock&&s.level===0;
+    const cost=s.level===0?m.cost:mineLevelCost(i);
+    const affordable=s.level>0?affordableLevels(i):0;
+    const one=card.querySelector(".mine-level-one");
+    const five=card.querySelector(".mine-level-five");
+    const max=card.querySelector(".mine-level-max");
+    const level=card.querySelector(".mine-level");
+    const price=card.querySelector(".mine-cost");
+    const info=card.querySelector(".mine-info");
+    const prog=card.querySelector(".mine-progress");
+    if(level) level.textContent=s.level?"Level "+s.level:"Gesperrt";
+    if(price) price.textContent=money(cost);
+    if(info){
+      const man=s.manager>=0?managerNames[s.manager]:"Keiner";
+      info.textContent=locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost);
+    }
+    if(prog) prog.style.width=(s.level?Math.min(100,Math.log10(s.level+1)/3*100):0)+"%";
+    if(one){
+      one.disabled=locked||state.money<cost;
+      one.textContent=s.level?"⬆️ Leveln":"🔓 Freischalten";
+    }
+    if(five) five.disabled=s.level<=0||affordable<1;
+    if(max) max.disabled=s.level<=0||affordable<1;
+
+    const mm=state.mineManagers && state.mineManagers[i];
+    const managerBox=card.querySelector(".mine-manager");
+    if(mm && managerBox && s.level>=10){
+      const mc=mineManagerCost(i);
+      const ma=affordableManagerLevels(i);
+      const ml=managerBox.querySelector(".manager-level");
+      const mb=managerBox.querySelector(".manager-bonus");
+      const mo=managerBox.querySelector(".manager-one");
+      const mf=managerBox.querySelector(".manager-five");
+      const mx=managerBox.querySelector(".manager-max");
+      if(ml) ml.textContent="Lv. "+mm.level;
+      if(mb) mb.textContent="+"+(managerBonus(i)*100).toFixed(1)+"% Produktion";
+      if(mo){mo.disabled=state.money<mc;mo.textContent="+1 · "+fmt(mc);}
+      if(mf) mf.disabled=ma<1;
+      if(mx) mx.disabled=ma<1;
+    }
+
+    card.classList.toggle("locked",locked);
+  });
+}
+
 function renderMines(){
   content.innerHTML=`<div class="list">${mines.map((m,i)=>{
     const s=state.mines[i], locked=state.totalEarned<m.unlock&&s.level===0;
     const cost=s.level===0?m.cost:mineLevelCost(i);
     const man=s.manager>=0?managerNames[s.manager]:"Keiner";
-    return `<div class="card ${locked?"locked":""}">
-      <div class="row"><div><span class="title">${m.icon} ${m.name}</span> <span class="badge">${s.level?"Level "+s.level:"Gesperrt"}</span></div><div class="price">${money(cost)}</div></div>
-      <div class="small">${locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost)}</div>
-      <div class="progress" style="margin-top:8px"><i style="width:${s.level?Math.min(100,Math.log10(s.level+1)/3*100):0}%"></i></div>
-      <div class="actions"><button ${locked||state.money<cost?"disabled":""} onclick="buyMine(${i})">${s.level?"⬆️ Leveln":"🔓 Freischalten"}</button>${s.level?`<span class="badge">Managerbonus +${(managerBonus(i)*100).toFixed(0)}%</span>`:""}</div>
+    return `<div class="card mine-card ${locked?"locked":""}" data-mine-card="${i}">
+      <div class="row"><div><span class="title">${m.icon} ${m.name}</span> <span class="badge mine-level">${s.level?"Level "+s.level:"Gesperrt"}</span></div><div class="price mine-cost">${money(cost)}</div></div>
+      <div class="small mine-info">${locked?"Freischaltung bei "+money(m.unlock):s.level?money(mineIncome(i)*(1+globalBonus()))+"/s · Manager: "+man:"Kaufen für "+money(m.cost)}</div>
+      <div class="progress" style="margin-top:8px"><i class="mine-progress" style="width:${s.level?Math.min(100,Math.log10(s.level+1)/3*100):0}%"></i></div>
+      <div class="actions"><button class="mine-level-one" ${locked||state.money<cost?"disabled":""} onclick="buyMine(${i});return false;">${s.level?"⬆️ Leveln":"🔓 Freischalten"}</button>
+      <div class="level-controls" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <button class="mine-level-five" onclick="levelMineBy(${i},5);return false;" ${s.level<=0||affordableLevels(i)<1?'disabled':''}>+5 Level</button>
+        <button class="mine-level-max" onclick="maxLevelMine(${i});return false;" ${s.level<=0||affordableLevels(i)<1?'disabled':''}>MAX</button>
+      </div>${s.level?`<span class="badge">Managerbonus +${(managerBonus(i)*100).toFixed(0)}%</span>`:""}${mineManagerHTML(i)}</div>
     </div>`;
   }).join("")}</div>`;
+  updateMineControls();
 }
 function renderManagers(){
   content.innerHTML=`<div class="list">${state.managers.map((m,i)=>{
     const cost=managerCost(i),mine=state.mines.findIndex(x=>x.manager===i);
     return `<div class="card ${m.unlocked?"":"locked"}"><div class="row"><div><span class="title">${managerIcons[i]} ${m.name}</span><div class="small">${m.unlocked?"Level "+m.level+" · Rolle: "+managerRoles[i]:"Wird mit der entsprechenden Mine freigeschaltet"}</div></div><div class="price">${m.unlocked?money(cost):"🔒"}</div></div>
-    ${m.unlocked?`<div class="actions"><button ${state.money<cost?"disabled":""} onclick="buyManager(${i})">💰 Aufwerten</button><select onchange="assignManager(${i},this.value)" style="padding:9px;border-radius:9px;background:#2b3749;color:white;border:0"><option value="-1">Keine Mine</option>${state.mines.map((x,j)=>x.level?`<option value="${j}" ${mine===j?"selected":""}>${mines[j].name}</option>`:"").join("")}</select></div>`:""}</div>`;
+    ${m.unlocked?`<div class="actions"><select onchange="assignManager(${i},this.value)" style="padding:9px;border-radius:9px;background:#2b3749;color:white;border:0"><option value="-1">Keine Mine</option>${state.mines.map((x,j)=>x.level?`<option value="${j}" ${mine===j?"selected":""}>${mines[j].name}</option>`:"").join("")}</select></div>`:""}</div>`;
   }).join("")}</div>`;
 }
 function renderInvest(){
@@ -388,8 +633,18 @@ const modalContent=document.getElementById("modalContent");
 
 function refreshActionUI(){
   const y=window.scrollY;
+  const active=document.activeElement;
+  const activeMine=active && active.closest ? active.closest(".mine-card")?.dataset.mineCard : null;
   renderCurrentTab();
-  requestAnimationFrame(()=>window.scrollTo(0,y));
+  window.scrollTo({top:y,left:0,behavior:"auto"});
+  requestAnimationFrame(()=>{
+    window.scrollTo({top:y,left:0,behavior:"auto"});
+    if(activeMine!==null){
+      const card=document.querySelector(`.mine-card[data-mine-card="${activeMine}"]`);
+      const btn=card?.querySelector(".mine-level-one");
+      if(btn) btn.focus({preventScroll:true});
+    }
+  });
 }
 function updateLiveUI(){
   moneyEl.textContent=money(state.money);
@@ -397,11 +652,13 @@ function updateLiveUI(){
   bigIncome.textContent=money(income())+" / s";
   investorsEl.textContent=state.investors;
   globalBonusEl.textContent="+"+(globalBonus()*100).toFixed(0)+"%";
+  updateMineControls();
   next.innerHTML=`<p>🏦 Investor-Reset: <b>${state.totalEarned>=1e12?"freigeschaltet":"ab "+money(1e12)}</b></p><p>Aktueller Run: <b>${money(state.totalEarned)}</b></p><div class="progress"><i style="width:${Math.min(100,state.totalEarned/1e12*100)}%"></i></div><p class="small">${state.totalEarned>=1e12?"Reset bringt "+investorGain()+" Investoren.":"Noch "+money(Math.max(0,1e12-state.totalEarned))+" bis zur ersten Reset-Möglichkeit."}</p>`;
 }
 function render(){
-  updateLiveUI();
+  ensureMineManagers(); autoAssignMineManagers();
   renderContent();
+  updateLiveUI();
 }
 loadGame();
 render();
@@ -417,7 +674,7 @@ setInterval(()=>{
 },1000);
 setInterval(saveGame,10000);
 
-window.addEventListener("error",e=>console.error("Mining Empire Fehler:",e.error||e.message));
+window.addEventListener("error",e=>console.error("Idle Miner Fehler:",e.error||e.message));
 </script>
 
 <script>

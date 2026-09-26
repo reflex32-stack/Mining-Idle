@@ -1,7 +1,7 @@
 {
-  "name": "Mining Empire",
-  "short_name": "Mining Empire",
-  "description": "2D Idle Mining Empire",
+  "name": "Idle Miner",
+  "short_name": "Idle Miner",
+  "description": "2D Idle Idle Miner",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
