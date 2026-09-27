@@ -146,6 +146,17 @@ body{padding-top:0!important}
 }
 </style>
 
+<style id="v18-sticky-stats">
+/* V18: Vermögen und Profit/Sek. bleiben garantiert am oberen Bildschirmrand sichtbar. */
+.top{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;z-index:10000!important;
+  margin:0!important;box-shadow:0 3px 16px rgba(0,0,0,.35)!important;
+  padding-top:max(8px,env(safe-area-inset-top))!important;
+}
+.app{padding-top:calc(18px + var(--header-height))!important}
+@media(max-width:600px){.app{padding-top:calc(12px + var(--header-height))!important}}
+.tabs{position:sticky!important;top:var(--header-height)!important;z-index:9000!important}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -268,7 +279,9 @@ function mineMult(level){
 }
 function productionTime(level){
   if(level<=0) return 0;
-  return Math.max(1,15-5*Math.floor(level/5));
+  if(level<=4) return 10;
+  if(level<=9) return 5;
+  return 1;
 }
 
 function levelCostFor(i, level){
@@ -696,7 +709,9 @@ const modalContent=document.getElementById("modalContent");
 function syncStickyHeader(){
   const top=document.querySelector(".top");
   if(!top) return;
-  document.documentElement.style.setProperty("--header-height", Math.ceil(top.getBoundingClientRect().height)+"px");
+  const h=Math.ceil(top.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--header-height", h+"px");
+  top.style.minHeight=h+"px";
 }
 window.addEventListener("resize",syncStickyHeader,{passive:true});
 window.addEventListener("orientationchange",()=>setTimeout(syncStickyHeader,50),{passive:true});
